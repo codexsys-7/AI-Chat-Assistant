@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "TextSelectionProbe"
 include(":app")
+include(":samplechat")
