@@ -38,6 +38,8 @@ From `android/`:
 
 Install both debug APKs on an API 33 or 34 emulator, open **Sample Chat**, long-press that sentence, and choose **Text Selection Probe** from the text selection toolbar. The probe should show path **Selected text**, action `android.intent.action.PROCESS_TEXT`, and that sentence.
 
+On Android 11 and later, Sample Chat must declare a `<queries>` intent for `ACTION_PROCESS_TEXT` and `text/plain`. Without it, the selection toolbar omits Text Selection Probe even though Copy, Select all, and Read aloud still appear.
+
 If the floating toolbar cannot be driven, this adb intent is only a secondary check. It is not the toolbar path:
 
 ```
