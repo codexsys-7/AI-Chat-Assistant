@@ -13,12 +13,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.probe.textselection.context.ContextCapture
 
 private const val EMPTY_HINT =
     "Select text in another app and choose Text Selection Probe from the text selection toolbar, or share plain text into this app."
 
+private const val CONTEXT_UNAVAILABLE =
+    "Selected text captured, surrounding context unavailable."
+
 @Composable
-fun TextProbeScreen(received: ReceivedText) {
+fun TextProbeScreen(received: ReceivedText, capture: ContextCapture) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -46,6 +50,18 @@ fun TextProbeScreen(received: ReceivedText) {
                         )
                     }
                 }
+                Field(label = "SELECTED TEXT", value = display(capture.selectedText))
+                Field(label = "PRECEDING CONTEXT", value = display(capture.precedingContext))
+                Field(label = "FOLLOWING CONTEXT", value = display(capture.followingContext))
+                Field(label = "SOURCE APP", value = display(capture.sourcePackage))
+                Field(label = "CAPTURE STATUS", value = capture.status.name)
+                Field(label = "CAPTURE METHOD", value = capture.captureMethod.name)
+                if (surroundingContextMissing(received, capture)) {
+                    Text(
+                        text = CONTEXT_UNAVAILABLE,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
             }
         }
     }
@@ -63,4 +79,13 @@ private fun pathLabel(path: TextPath): String = when (path) {
     TextPath.Selected -> "Selected text"
     TextPath.Shared -> "Shared text"
     TextPath.None -> "None"
+}
+
+private fun display(value: String?): String = value?.takeIf { it.isNotBlank() } ?: "—"
+
+private fun surroundingContextMissing(received: ReceivedText, capture: ContextCapture): Boolean {
+    return received.path == TextPath.Selected &&
+        !capture.selectedText.isNullOrBlank() &&
+        capture.precedingContext.isNullOrBlank() &&
+        capture.followingContext.isNullOrBlank()
 }

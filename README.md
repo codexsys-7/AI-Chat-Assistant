@@ -24,6 +24,20 @@ From `android/`:
 
 Logcat tag: `TextSelectionProbe`.
 
+## Context capture
+
+The probe can also keep about two or three visible sentences before and after a selection. That path is separate from reading `EXTRA_PROCESS_TEXT`. An accessibility service takes an in-memory snapshot while the other app is still visible. `ACTION_PROCESS_TEXT` then brings this activity forward, so the probe matches the selection against that snapshot instead of reading the window after it is already in front. Nothing is written to disk or sent anywhere. If the surrounding sentences cannot be read, the screen says: `Selected text captured, surrounding context unavailable.` Selected text still appears when the accessibility service is off.
+
+Enable it in Settings → Accessibility → Text Selection Probe → Context capture. On Android 13 and later, a sideloaded app may first need Settings → Apps → Text Selection Probe → allow restricted settings. Logcat tag: `ContextCapture`.
+
+## Capability test
+
+Sample Chat keeps the mitochondria transcript and adds one assistant paragraph about retrieval augmented generation. Select this sentence from that paragraph:
+
+`The system first retrieves relevant documents and then provides those documents to the model as context.`
+
+With Context capture on, choose **Text Selection Probe**. Preceding context should include `Retrieval augmented generation combines language models with external knowledge sources.` Following context should include `This can help the model answer questions using information that was not contained in its original training data.` The probe discovers those sentences from the visible text. They are not hardcoded in the probe.
+
 ## Sample Chat on an emulator
 
 `samplechat` is a second app in the same Gradle project (`dev.probe.samplechat`, launcher name **Sample Chat**). It shows a hardcoded transcript. The assistant energy note has this selectable sentence in the middle:

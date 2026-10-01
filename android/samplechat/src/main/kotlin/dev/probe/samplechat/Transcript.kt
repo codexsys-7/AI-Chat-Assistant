@@ -39,4 +39,14 @@ val sampleTranscript: List<ChatMessage> = listOf(
         fromUser = true,
         paragraphs = listOf("Starting there."),
     ),
+    ChatMessage(
+        fromUser = true,
+        paragraphs = listOf("How does retrieval augmented generation work?"),
+    ),
+    ChatMessage(
+        fromUser = false,
+        paragraphs = listOf(
+            "Retrieval augmented generation combines language models with external knowledge sources. The system first retrieves relevant documents and then provides those documents to the model as context. This can help the model answer questions using information that was not contained in its original training data. The quality of the retrieved information therefore has a major effect on the final answer.",
+        ),
+    ),
 )

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Text Selection Probe</string>
+    <string name="accessibility_service_label">Context capture</string>
+    <string name="accessibility_service_description">Reads the visible window while you select text so the probe can keep a few nearby sentences in memory. It does not save or send that text.</string>
 </resources>
