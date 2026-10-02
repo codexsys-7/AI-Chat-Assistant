@@ -9,20 +9,10 @@ internal object ContextCaptureLog {
         Log.i(TAG, "accessibilityServiceEnabled=$enabled")
     }
 
-    fun snapshot(
-        sourcePackage: String,
-        nodeCount: Int,
-        selectedLength: Int,
-        selectedPreview: String,
-        selectedFound: Boolean,
-        precedingFound: Boolean,
-        followingFound: Boolean,
-    ) {
+    fun visibleWindow(sourcePackage: String, nodeCount: Int, textLength: Int) {
         Log.i(
             TAG,
-            "snapshot sourcePackage=$sourcePackage nodeCount=$nodeCount " +
-                "selectedLength=$selectedLength preview=${preview(selectedPreview)} " +
-                "selectedFound=$selectedFound precedingFound=$precedingFound followingFound=$followingFound",
+            "visibleWindow sourcePackage=$sourcePackage nodeCount=$nodeCount textLength=$textLength",
         )
     }
 
@@ -30,16 +20,17 @@ internal object ContextCaptureLog {
         capture: ContextCapture,
         accessibilityEnabled: Boolean,
         nodeCount: Int?,
-        selectedFound: Boolean,
+        windowPackage: String?,
+        selectedContained: Boolean,
     ) {
         Log.i(
             TAG,
             "selectedTextReceived length=${capture.selectedText?.length ?: 0} " +
                 "preview=${preview(capture.selectedText.orEmpty())} " +
-                "sourcePackage=${capture.sourcePackage ?: "none"} " +
+                "sourcePackage=${capture.sourcePackage ?: windowPackage ?: "none"} " +
                 "accessibilityEnabled=$accessibilityEnabled " +
                 "nodeCount=${nodeCount?.toString() ?: "unavailable"} " +
-                "selectedFound=$selectedFound " +
+                "selectedContained=$selectedContained " +
                 "precedingFound=${!capture.precedingContext.isNullOrBlank()} " +
                 "followingFound=${!capture.followingContext.isNullOrBlank()} " +
                 "success=${capture.success} status=${capture.status} method=${capture.captureMethod} " +

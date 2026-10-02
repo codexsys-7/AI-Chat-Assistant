@@ -8,17 +8,19 @@ import dev.probe.textselection.TextPath
 
 /**
  * Boundary between selection capture and the debug UI.
- * Matches [EXTRA_PROCESS_TEXT] against an in-memory snapshot. It does not read the window itself.
+ * Finds [EXTRA_PROCESS_TEXT] inside the latest in-memory visible-text snapshot.
+ * It does not read the window itself.
  */
 object ContextCaptureRepository {
     fun capture(context: Context, received: ReceivedText): ContextCapture {
-        val matched = if (received.path == TextPath.Selected && !received.text.isNullOrBlank()) {
-            ContextSnapshotStore.match(received.text)
+        val window = if (received.path == TextPath.Selected && !received.text.isNullOrBlank()) {
+            ContextSnapshotStore.latest()
         } else {
             null
         }
+        val contained = window != null && contains(window.visibleText, received.text.orEmpty())
         val capture = when (received.path) {
-            TextPath.Selected -> fromSelection(context, received.text, matched)
+            TextPath.Selected -> fromSelection(context, received.text, window, contained)
             TextPath.Shared -> sharedOnly(received.text)
             TextPath.None -> ContextCapture.idle()
         }
@@ -26,8 +28,9 @@ object ContextCaptureRepository {
             ContextCaptureLog.result(
                 capture = capture,
                 accessibilityEnabled = accessibilityEnabled(context),
-                nodeCount = matched?.nodeCount,
-                selectedFound = matched?.selectedFound == true,
+                nodeCount = window?.nodeCount,
+                windowPackage = window?.sourcePackage,
+                selectedContained = contained,
             )
         }
         return capture
@@ -46,7 +49,8 @@ object ContextCaptureRepository {
     private fun fromSelection(
         context: Context,
         selectedText: String?,
-        snapshot: SelectionSnapshot?,
+        window: VisibleWindowSnapshot?,
+        contained: Boolean,
     ): ContextCapture {
         if (selectedText.isNullOrBlank()) {
             return failed(
@@ -55,9 +59,9 @@ object ContextCaptureRepository {
                 reason = "Selected text was empty.",
             )
         }
-        if (snapshot == null) {
+        if (window == null) {
             val reason = if (accessibilityEnabled(context)) {
-                "No visible-text snapshot matched this selection."
+                "No visible-text snapshot was stored."
             } else {
                 "Accessibility service is off."
             }
@@ -67,8 +71,16 @@ object ContextCaptureRepository {
                 reason = reason,
             )
         }
-        val preceding = snapshot.precedingContext
-        val following = snapshot.followingContext
+        if (!contained) {
+            return failed(
+                selectedText = selectedText,
+                method = CaptureMethod.SelectedText,
+                reason = "Selected text was not contained in the visible-text snapshot.",
+            )
+        }
+        val surrounding = SentenceWindow.around(window.visibleText, selectedText)
+        val preceding = surrounding?.preceding
+        val following = surrounding?.following
         val hasPreceding = !preceding.isNullOrBlank()
         val hasFollowing = !following.isNullOrBlank()
         val status = when {
@@ -80,16 +92,22 @@ object ContextCaptureRepository {
             selectedText = selectedText,
             precedingContext = preceding,
             followingContext = following,
-            sourcePackage = snapshot.sourcePackage,
+            sourcePackage = window.sourcePackage,
             captureMethod = CaptureMethod.Accessibility,
             success = status == CaptureStatus.SUCCESS,
             failureReason = when (status) {
                 CaptureStatus.SUCCESS -> null
                 CaptureStatus.PARTIAL -> "Only one side of the surrounding text was visible."
-                CaptureStatus.FAILED -> "Selected text was found, but no surrounding sentences were visible."
+                CaptureStatus.FAILED -> "Selected text was contained, but no surrounding sentences were visible."
             },
             status = status,
         )
+    }
+
+    private fun contains(corpus: String, selectedText: String): Boolean {
+        val needle = SentenceWindow.normalize(selectedText)
+        if (needle.isEmpty()) return false
+        return SentenceWindow.normalize(corpus).contains(needle)
     }
 
     private fun sharedOnly(text: String?): ContextCapture {

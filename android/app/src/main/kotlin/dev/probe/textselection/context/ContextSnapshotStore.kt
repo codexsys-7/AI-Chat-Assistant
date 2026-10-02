@@ -1,47 +1,31 @@
 package dev.probe.textselection.context
 
 /**
- * In-memory snapshots taken while the host app is still visible.
- * Nothing here is written to disk.
+ * Latest visible text from an app other than the probe.
+ * Kept only in memory. Probe window events must not clear it.
  */
-internal data class SelectionSnapshot(
+internal data class VisibleWindowSnapshot(
     val sourcePackage: String,
-    val selectedText: String,
-    val precedingContext: String?,
-    val followingContext: String?,
+    val visibleText: String,
     val nodeCount: Int,
-    val selectedFound: Boolean,
 )
 
 internal object ContextSnapshotStore {
-    private const val MAX_SNAPSHOTS = 8
     private val lock = Any()
-    private val recent = ArrayDeque<SelectionSnapshot>()
+    private var latest: VisibleWindowSnapshot? = null
 
-    fun record(snapshot: SelectionSnapshot) {
+    fun record(snapshot: VisibleWindowSnapshot) {
+        if (snapshot.sourcePackage.isBlank() || snapshot.visibleText.isBlank() || snapshot.nodeCount <= 0) {
+            return
+        }
         synchronized(lock) {
-            recent.addLast(snapshot)
-            while (recent.size > MAX_SNAPSHOTS) {
-                recent.removeFirst()
-            }
+            latest = snapshot
         }
     }
 
-    fun match(selectedText: String): SelectionSnapshot? {
-        val needle = SentenceWindow.normalize(selectedText)
-        if (needle.isEmpty()) return null
+    fun latest(): VisibleWindowSnapshot? {
         synchronized(lock) {
-            return recent.asReversed().firstOrNull { snapshot ->
-                val candidate = SentenceWindow.normalize(snapshot.selectedText)
-                candidate.isNotEmpty() &&
-                    (candidate == needle || candidate.contains(needle) || needle.contains(candidate))
-            }
-        }
-    }
-
-    fun clear() {
-        synchronized(lock) {
-            recent.clear()
+            return latest
         }
     }
 }
