@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.probe.textselection.engine.ContextPackage
 import dev.probe.textselection.interaction.UserAction
+
+private const val PURPOSE =
+    "Explain this passage, see an example, or ask a follow-up."
 
 private const val CONTEXT_UNAVAILABLE =
     "Selected text captured, surrounding context unavailable."
@@ -33,12 +35,10 @@ fun ActionPopup(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SelectionContainer {
-                    Text(
-                        text = contextPackage.selectedText?.takeIf { it.isNotBlank() } ?: "—",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                Text(
+                    text = PURPOSE,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
                 if (surroundingContextMissing(contextPackage)) {
                     Text(
                         text = CONTEXT_UNAVAILABLE,
