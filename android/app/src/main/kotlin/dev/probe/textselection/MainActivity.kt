@@ -9,16 +9,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.probe.textselection.context.ContextCapture
 import dev.probe.textselection.context.ContextCaptureRepository
+import dev.probe.textselection.engine.ContextEngine
 
 class MainActivity : ComponentActivity() {
     private var received by mutableStateOf(ReceivedText.none())
-    private var capture by mutableStateOf(ContextCapture.idle())
+    private var contextPackage by mutableStateOf(ContextEngine.process(ContextCapture.idle()))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         accept(intent)
         setContent {
-            TextProbeScreen(received, capture)
+            TextProbeScreen(received, contextPackage)
         }
     }
 
@@ -32,6 +33,6 @@ class MainActivity : ComponentActivity() {
         IntentDebugLogger.log(intent)
         val incoming = IncomingText.read(intent)
         received = incoming
-        capture = ContextCaptureRepository.capture(this, incoming)
+        contextPackage = ContextEngine.process(ContextCaptureRepository.capture(this, incoming))
     }
 }
