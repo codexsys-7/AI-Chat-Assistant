@@ -15,12 +15,12 @@ From `android/`:
 1. Install the debug APK.
 2. In another app, select plain text.
 3. From the text selection toolbar, choose **Text Selection Probe**.
-4. The screen should show path **Selected text**, action `android.intent.action.PROCESS_TEXT`, MIME type `text/plain`, and the selected text. The original selection is left unchanged.
+4. A small dialog offers Explain, Give Example, and Ask Follow-up. The selected sentence is not shown there. The original selection is left unchanged.
 
 ## Test SEND
 
 1. In another app, share plain text (`text/plain`) and choose **Text Selection Probe**.
-2. The screen should show path **Shared text**, action `android.intent.action.SEND`, MIME type `text/plain`, and the shared text.
+2. The same dialog offers those three actions. The shared text is not shown there.
 
 Logcat tag: `TextSelectionProbe`.
 
@@ -31,6 +31,10 @@ The probe can also keep about two or three visible sentences before and after a 
 Enable it in Settings → Accessibility → Text Selection Probe → Context capture. On Android 13 and later, a sideloaded app may first need Settings → Apps → Text Selection Probe → allow restricted settings. Logcat tag: `ContextCapture`.
 
 The debug fields are a `ContextPackage` from `ContextEngine`, not the raw accessibility snapshot. The engine trims and collapses whitespace, drops the selected sentence if it was copied into the surrounding text, drops chat turns labeled `You`, removes a leading `Assistant` label from text it keeps, and keeps at most three sentences on each side. Text with no speaker label is left as it is. It does not call a model or invent missing sentences. `CONTEXT QUALITY` is `HIGH` when both sides are meaningful, `MEDIUM` when only one side is, `LOW` when the surrounding text is extremely short, and `UNAVAILABLE` when no reliable surrounding text remains.
+
+## Actions
+
+Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest` and opens a separate screen with that request only. Nothing is sent. Empty selected text does not create a request. There is no model provider yet.
 
 ## Capability test
 
