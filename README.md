@@ -32,6 +32,10 @@ Enable it in Settings → Accessibility → Text Selection Probe → Context cap
 
 The debug fields are a `ContextPackage` from `ContextEngine`, not the raw accessibility snapshot. The engine trims and collapses whitespace, drops the selected sentence if it was copied into the surrounding text, drops chat turns labeled `You`, removes a leading `Assistant` label from text it keeps, and keeps at most three sentences on each side. Text with no speaker label is left as it is. It does not call a model or invent missing sentences. `CONTEXT QUALITY` is `HIGH` when both sides are meaningful, `MEDIUM` when only one side is, `LOW` when the surrounding text is extremely short, and `UNAVAILABLE` when no reliable surrounding text remains.
 
+## Actions
+
+After selected text arrives, the same screen shows Explain, Give Example, and Ask Follow-up. This is an in-app screen, not a floating overlay. Tapping an action builds an `AIRequest` locally and shows it. Nothing is sent. If surrounding context is missing, the actions still work from the selected text alone, and the screen still says: `Selected text captured, surrounding context unavailable.` Low-quality context stays usable and says that context is limited. There is no model provider yet.
+
 ## Capability test
 
 Sample Chat keeps the mitochondria transcript and adds one assistant paragraph about retrieval augmented generation. Select this sentence from that paragraph:
