@@ -26,7 +26,8 @@ object ContextEngine {
 
     private fun limitSide(raw: String?, selected: String?, nearest: Nearest): String? {
         val normalized = normalize(raw) ?: return null
-        val pieces = dropSelected(splitPieces(normalized), selected)
+        val withoutUserTurns = omitUserTurns(normalized) ?: return null
+        val pieces = dropSelected(splitPieces(withoutUserTurns), selected)
         if (pieces.isEmpty()) return null
         val limited = if (pieces.size <= ContextLimits.MAX_SURROUNDING_SENTENCES) {
             pieces
@@ -67,6 +68,67 @@ object ContextEngine {
             .replace(Regex("\\n{3,}"), "\n\n")
             .trim()
         return collapsed.ifEmpty { null }
+    }
+
+    private enum class Speaker(val token: String) {
+        USER("You"),
+        ASSISTANT("Assistant"),
+    }
+
+    private data class SpeakerMark(val index: Int, val speaker: Speaker, val contentStart: Int)
+
+    /**
+     * Drops turns whose speaker label is [Speaker.USER].
+     * A label counts only at the start of the text, after a newline, or after
+     * sentence punctuation. Text with no label is returned unchanged.
+     */
+    private fun omitUserTurns(text: String): String? {
+        val marks = speakerMarks(text)
+        if (marks.isEmpty()) return text
+        val kept = mutableListOf<String>()
+        val prefix = text.substring(0, marks.first().index).trim()
+        if (prefix.isNotEmpty()) kept += prefix
+        marks.forEachIndexed { index, mark ->
+            if (mark.speaker != Speaker.ASSISTANT) return@forEachIndexed
+            val end = if (index + 1 < marks.size) marks[index + 1].index else text.length
+            val body = text.substring(mark.contentStart, end).trim()
+            if (body.isNotEmpty()) kept += body
+        }
+        if (kept.isEmpty()) return null
+        return kept.joinToString(" ")
+    }
+
+    private fun speakerMarks(text: String): List<SpeakerMark> {
+        val marks = mutableListOf<SpeakerMark>()
+        var index = 0
+        while (index < text.length) {
+            val speaker = if (isSpeakerBoundary(text, index)) speakerAt(text, index) else null
+            if (speaker != null) {
+                var contentStart = index + speaker.token.length
+                while (contentStart < text.length && text[contentStart].isWhitespace()) contentStart++
+                marks += SpeakerMark(index, speaker, contentStart)
+                index = contentStart
+            } else {
+                index++
+            }
+        }
+        return marks
+    }
+
+    private fun isSpeakerBoundary(text: String, index: Int): Boolean {
+        if (index == 0) return true
+        if (text[index - 1] == '\n') return true
+        return index >= 2 && text[index - 1].isWhitespace() && text[index - 2] in ".!?"
+    }
+
+    private fun speakerAt(text: String, index: Int): Speaker? {
+        for (speaker in listOf(Speaker.ASSISTANT, Speaker.USER)) {
+            val token = speaker.token
+            if (!text.startsWith(token, index)) continue
+            val after = index + token.length
+            if (after == text.length || text[after].isWhitespace()) return speaker
+        }
+        return null
     }
 
     private data class Piece(val text: String, val paragraphIndex: Int)

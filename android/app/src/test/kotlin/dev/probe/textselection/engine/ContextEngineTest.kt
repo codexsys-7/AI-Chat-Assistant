@@ -143,6 +143,56 @@ class ContextEngineTest {
     }
 
     @Test
+    fun precedingUserTurnsAreDroppedAndAssistantLabelIsRemoved() {
+        val result = ContextEngine.process(
+            capture(
+                selectedText = selected,
+                precedingContext = "You Starting there. You How does retrieval augmented generation work? " +
+                    "Assistant $preceding",
+                followingContext = following,
+            ),
+        )
+
+        assertEquals(selected, result.selectedText)
+        assertEquals(preceding, result.precedingContext)
+        assertFalse(result.precedingContext!!.contains("You"))
+        assertFalse(result.precedingContext!!.contains("Assistant"))
+        assertEquals(ContextQuality.HIGH, result.contextQuality)
+    }
+
+    @Test
+    fun followingUserTurnsAreDroppedAndAssistantLabelIsRemoved() {
+        val result = ContextEngine.process(
+            capture(
+                selectedText = selected,
+                precedingContext = preceding,
+                followingContext = "Assistant $following You Should I trust that answer?",
+            ),
+        )
+
+        assertEquals(following, result.followingContext)
+        assertFalse(result.followingContext!!.contains("Assistant"))
+        assertFalse(result.followingContext!!.contains("Should I trust"))
+        assertEquals(ContextQuality.HIGH, result.contextQuality)
+    }
+
+    @Test
+    fun unlabeledSurroundingTextIsPreserved() {
+        val unlabeled = "The model can help you answer a question from outside its training data."
+        val result = ContextEngine.process(
+            capture(
+                selectedText = selected,
+                precedingContext = unlabeled,
+                followingContext = "After the break, you can read the next sentence.",
+            ),
+        )
+
+        assertEquals(unlabeled, result.precedingContext)
+        assertEquals("After the break, you can read the next sentence.", result.followingContext)
+        assertEquals(selected, result.selectedText)
+    }
+
+    @Test
     fun normalizationDoesNotChangeSelectedTextMeaning() {
         val original = "Don't rewrite this: it's already clear."
         val result = ContextEngine.process(
