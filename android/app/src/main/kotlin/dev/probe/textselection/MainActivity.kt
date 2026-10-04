@@ -2,6 +2,7 @@ package dev.probe.textselection
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
@@ -15,18 +16,20 @@ import dev.probe.textselection.interaction.AIRequestFactory
 import dev.probe.textselection.interaction.UserAction
 
 class MainActivity : ComponentActivity() {
-    private var received by mutableStateOf(ReceivedText.none())
     private var contextPackage by mutableStateOf(ContextEngine.process(ContextCapture.idle()))
-    private var requestAttempt by mutableStateOf<AIRequestAttempt?>(null)
+    private var rejection by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setLayout(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+        )
         accept(intent)
         setContent {
-            TextProbeScreen(
-                received = received,
+            ActionPopup(
                 contextPackage = contextPackage,
-                requestAttempt = requestAttempt,
+                rejection = rejection,
                 onAction = ::onAction,
             )
         }
@@ -41,12 +44,17 @@ class MainActivity : ComponentActivity() {
     private fun accept(intent: Intent?) {
         IntentDebugLogger.log(intent)
         val incoming = IncomingText.read(intent)
-        received = incoming
         contextPackage = ContextEngine.process(ContextCaptureRepository.capture(this, incoming))
-        requestAttempt = null
+        rejection = null
     }
 
     private fun onAction(action: UserAction) {
-        requestAttempt = AIRequestFactory.create(contextPackage, action)
+        when (val attempt = AIRequestFactory.create(contextPackage, action)) {
+            is AIRequestAttempt.Rejected -> rejection = attempt.reason
+            is AIRequestAttempt.Ready -> {
+                rejection = null
+                startActivity(RequestFields.from(attempt.request).toIntent(this))
+            }
+        }
     }
 }

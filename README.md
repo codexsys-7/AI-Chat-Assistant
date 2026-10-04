@@ -15,12 +15,12 @@ From `android/`:
 1. Install the debug APK.
 2. In another app, select plain text.
 3. From the text selection toolbar, choose **Text Selection Probe**.
-4. The screen should show path **Selected text**, action `android.intent.action.PROCESS_TEXT`, MIME type `text/plain`, and the selected text. The original selection is left unchanged.
+4. A small dialog shows the selected sentence and the actions Explain, Give Example, and Ask Follow-up. The original selection is left unchanged.
 
 ## Test SEND
 
 1. In another app, share plain text (`text/plain`) and choose **Text Selection Probe**.
-2. The screen should show path **Shared text**, action `android.intent.action.SEND`, MIME type `text/plain`, and the shared text.
+2. The same dialog shows the shared text and those three actions.
 
 Logcat tag: `TextSelectionProbe`.
 
@@ -34,7 +34,7 @@ The debug fields are a `ContextPackage` from `ContextEngine`, not the raw access
 
 ## Actions
 
-After selected text arrives, the same screen shows Explain, Give Example, and Ask Follow-up. This is an in-app screen, not a floating overlay. Tapping an action builds an `AIRequest` locally and shows it. Nothing is sent. If surrounding context is missing, the actions still work from the selected text alone, and the screen still says: `Selected text captured, surrounding context unavailable.` Low-quality context stays usable and says that context is limited. There is no model provider yet.
+Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog shows the selected sentence and Explain, Give Example, and Ask Follow-up. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest` and opens a separate screen with that request only. Nothing is sent. Empty selected text does not create a request. There is no model provider yet.
 
 ## Capability test
 
