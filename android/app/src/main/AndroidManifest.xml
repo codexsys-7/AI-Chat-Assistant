@@ -37,6 +37,11 @@
             android:exported="false"
             android:theme="@style/Theme.TextSelectionProbe" />
 
+        <activity
+            android:name=".ResponseActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TextSelectionProbe" />
+
         <service
             android:name=".context.ContextAccessibilityService"
             android:exported="false"
