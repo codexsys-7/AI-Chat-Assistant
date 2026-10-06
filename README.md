@@ -34,7 +34,7 @@ The debug fields are a `ContextPackage` from `ContextEngine`, not the raw access
 
 ## Actions
 
-Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest` and opens a separate screen with that request only. Nothing is sent. Empty selected text does not create a request. There is no model provider yet.
+Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest`, shows `Preparing response...` for a moment, then a local mock response labeled `MOCK`. The response names the action, provider `MockAIProvider`, model `mock-v1`, both ids, and status. It does not repeat the request fields. **Request debug** on that screen opens the earlier request view. Nothing is sent. Empty selected text does not create a request. There is no real model provider.
 
 ## Capability test
 

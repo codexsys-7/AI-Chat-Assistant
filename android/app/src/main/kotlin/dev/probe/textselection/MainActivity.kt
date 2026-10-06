@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dev.probe.textselection.ai.PendingRequests
 import dev.probe.textselection.context.ContextCapture
 import dev.probe.textselection.context.ContextCaptureRepository
 import dev.probe.textselection.engine.ContextEngine
@@ -53,7 +54,8 @@ class MainActivity : ComponentActivity() {
             is AIRequestAttempt.Rejected -> rejection = attempt.reason
             is AIRequestAttempt.Ready -> {
                 rejection = null
-                startActivity(RequestFields.from(attempt.request).toIntent(this))
+                PendingRequests.hold(attempt.request)
+                startActivity(ResponseActivity.intent(this, attempt.request.requestId))
             }
         }
     }
