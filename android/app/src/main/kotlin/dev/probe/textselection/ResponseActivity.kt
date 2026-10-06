@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.probe.textselection.ai.AppServices
 import dev.probe.textselection.ai.PendingRequests
+import kotlinx.coroutines.delay
 
 class ResponseActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +21,10 @@ class ResponseActivity : ComponentActivity() {
         var phase by mutableStateOf<ResponsePhase>(ResponsePhase.Preparing)
         setContent {
             LaunchedEffect(requestId) {
+                // The mock provider returns without suspending, so this hold is what
+                // lets the preparing line paint and stay readable. Generation still
+                // runs on this coroutine.
+                delay(PREPARING_VISIBLE_MS)
                 phase = if (request == null) {
                     ResponsePhase.Failed(message = "Could not prepare a response.")
                 } else {
@@ -36,6 +41,7 @@ class ResponseActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val PREPARING_VISIBLE_MS = 500L
         private const val REQUEST_ID = "dev.probe.textselection.response.requestId"
 
         fun intent(context: Context, requestId: String): Intent {
