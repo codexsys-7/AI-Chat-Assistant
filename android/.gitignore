@@ -9,3 +9,5 @@ captures/
 *.apk
 *.ap_
 output.json
+.env
+**/.env

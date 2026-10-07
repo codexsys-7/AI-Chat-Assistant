@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 rootProject.name = "TextSelectionProbe"
 include(":app")
 include(":samplechat")
+include(":backend")
+project(":backend").projectDir = file("../backend")

@@ -34,7 +34,73 @@ The debug fields are a `ContextPackage` from `ContextEngine`, not the raw access
 
 ## Actions
 
-Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest`, shows `Preparing response...` for a moment, then a local mock response labeled `MOCK`. The response names the action, provider `MockAIProvider`, model `mock-v1`, both ids, and status. It does not repeat the request fields. **Request debug** on that screen opens the earlier request view. Nothing is sent. Empty selected text does not create a request. There is no real model provider.
+Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest`, shows `Preparing response...` for a moment, then a response. The default build uses the local `MockAIProvider` (`mock-v1`) and sends nothing. A debug build can instead use `RemoteAIProvider`, which posts to the backend below. The response names the action, provider, model, both ids, and status. It does not repeat the request fields. **Request debug** on that screen opens the earlier request view. Empty selected text does not create a request.
+
+## Remote provider
+
+`MockAIProvider` stays the default. Set the Gradle property `ai.provider` to `REMOTE` to use `RemoteAIProvider`. That switch is build configuration, not a settings screen. Mock mode does not open a network connection.
+
+From `android/`:
+
+```
+./gradlew :app:assembleDebug -Pai.provider=REMOTE -Pai.backend.url=http://10.0.2.2:8080
+```
+
+`10.0.2.2` is the emulator's name for a backend on the host. The same keys can live in `android/local.properties`, which is gitignored. Any value other than `REMOTE` keeps the mock provider.
+
+The app talks only to that backend. It does not call OpenAI, and the APK does not contain a provider API key. The key belongs in the environment or in `backend/.env`.
+
+```
+cp backend/.env.example backend/.env
+```
+
+`backend/.env.example` contains `OPENAI_API_KEY=your_key_here`. Replace the placeholder locally. Do not commit `backend/.env`.
+
+From `android/`:
+
+```
+./gradlew --no-daemon :backend:run
+```
+
+The process reads `OPENAI_API_KEY`, listens on `0.0.0.0` and `PORT` (default `8080`), and calls OpenAI with `OPENAI_MODEL` (default `gpt-4o-mini`). A missing key stays a controlled error. The server has no accounts, database, or history.
+
+`POST /v1/complete`
+
+Request:
+
+```json
+{
+  "requestId": "request-1",
+  "action": "EXPLAIN",
+  "selectedText": "Cells store fuel.",
+  "precedingText": "A cell still has to turn stored fuel into usable energy.",
+  "followingText": null,
+  "contextQuality": "HIGH",
+  "prompt": {
+    "systemInstruction": "Explain the passage using the available context.",
+    "userContent": "Action: EXPLAIN\nContext quality: HIGH\nPreceding context: ...\nFollowing context: ...\nSelected text: Cells store fuel."
+  }
+}
+```
+
+`action` is `EXPLAIN`, `EXAMPLE`, or `FOLLOW_UP`. `prompt` is the existing `PromptEngine` result. The body does not include the conversation, a device id, the source package, or analytics. `precedingText` and `followingText` are null when that side was not captured. When context quality is `UNAVAILABLE`, the prompt says only the selected text is available and does not invent surrounding sentences.
+
+Response:
+
+```json
+{
+  "requestId": "request-1",
+  "responseId": "response-1",
+  "content": "...",
+  "provider": "OpenAI",
+  "model": "gpt-4o-mini",
+  "status": "SUCCESS"
+}
+```
+
+`status` is `SUCCESS` or `ERROR`. Failures use the same shape: a short user-facing message, a `Debug:` line, and no upstream error body. The app checks the body before it builds the existing `AIResponse`. The screen still lists Action, Response, Provider, Model, Request id, Response id, and Status. A real success shows the provider and model from this JSON. The screen header still says `MOCK`; that label was left in place with the rest of the response UI.
+
+On an emulator, install the `REMOTE` debug APK, start the backend with `OPENAI_API_KEY` set, open Sample Chat, select a sentence, and choose Explain, Give Example, or Ask Follow-up. The screen should keep `Preparing response...` until the call finishes, then show the model text or a controlled error.
 
 ## Capability test
 
