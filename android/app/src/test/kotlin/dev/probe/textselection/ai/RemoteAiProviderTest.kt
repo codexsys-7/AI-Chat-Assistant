@@ -202,13 +202,16 @@ class RemoteAiProviderTest {
         }
         assertEquals(listOf("EXPLAIN", "EXAMPLE", "FOLLOW_UP"), seen.map { it.action })
         assertEquals(
-            listOf(
-                "Explain the passage using the available context.",
-                "Give a concrete example of the passage using the available context.",
-                "Answer the implied follow-up using the passage and the available context.",
-            ),
+            UserAction.entries.map { action ->
+                PromptEngine.build(request(action, ContextQuality.HIGH)).systemInstruction
+            },
             seen.map { it.systemInstruction },
         )
+        assertTrue(seen[0].systemInstruction.contains("ASD-STE100"))
+        assertTrue(seen[0].systemInstruction.contains("no more than 3 sentences"))
+        assertTrue(seen[1].systemInstruction.contains("one simple example"))
+        assertTrue(seen[2].systemInstruction.contains("one follow-up question"))
+        assertTrue(seen[2].systemInstruction.contains("professor"))
         seen.forEach { payload ->
             assertTrue(payload.userContent.contains("Action: ${payload.action}"))
             assertTrue(payload.userContent.contains("Selected text: $selected"))

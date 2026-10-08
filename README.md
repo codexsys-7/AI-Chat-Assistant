@@ -30,7 +30,7 @@ The probe can also keep about two or three visible sentences before and after a 
 
 Enable it in Settings → Accessibility → Text Selection Probe → Context capture. On Android 13 and later, a sideloaded app may first need Settings → Apps → Text Selection Probe → allow restricted settings. Logcat tag: `ContextCapture`.
 
-The debug fields are a `ContextPackage` from `ContextEngine`, not the raw accessibility snapshot. The engine trims and collapses whitespace, drops the selected sentence if it was copied into the surrounding text, drops chat turns labeled `You`, removes a leading `Assistant` label from text it keeps, and keeps at most three sentences on each side. Text with no speaker label is left as it is. It does not call a model or invent missing sentences. `CONTEXT QUALITY` is `HIGH` when both sides are meaningful, `MEDIUM` when only one side is, `LOW` when the surrounding text is extremely short, and `UNAVAILABLE` when no reliable surrounding text remains.
+The debug fields are a `ContextPackage` from `ContextEngine`, not the raw accessibility snapshot. The engine trims and collapses whitespace, drops empty segments, drops the selected sentence if it was copied into the surrounding text, drops chat turns labeled `You`, removes a leading `Assistant` label from text it keeps, drops obvious selection-toolbar chrome, and keeps at most three sentences on each side. Text with no speaker label is left as it is. Selected text is only whitespace-normalized. It does not call a model or invent missing sentences. `CONTEXT QUALITY` is `HIGH` when both sides are meaningful and relevant to the selection, `MEDIUM` when the surrounding context is limited, `LOW` when it is weak or noisy, and `UNAVAILABLE` when it is missing. Non-empty text alone is not `HIGH`.
 
 ## Actions
 
@@ -83,7 +83,7 @@ Request:
 }
 ```
 
-`action` is `EXPLAIN`, `EXAMPLE`, or `FOLLOW_UP`. `prompt` is the existing `PromptEngine` result. The body does not include the conversation, a device id, the source package, or analytics. `precedingText` and `followingText` are null when that side was not captured. When context quality is `UNAVAILABLE`, the prompt says only the selected text is available and does not invent surrounding sentences.
+`action` is `EXPLAIN`, `EXAMPLE`, or `FOLLOW_UP`. `prompt` is the existing `PromptEngine` result. The body does not include the conversation, a device id, the source package, or analytics. `precedingText` and `followingText` are null when that side was not captured. When context quality is `UNAVAILABLE`, the prompt says preceding and following context are unavailable and that the model must answer from the selected text alone. It does not invent surrounding sentences. Explain asks for ASD-STE100 simplified technical English in no more than 3 sentences. Example asks for one simple example. Follow-up asks one question about the selected text and a short professor-style explanation of that question.
 
 Response:
 

@@ -25,13 +25,17 @@ fun RequestScreen(fields: RequestFields) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 RequestField(label = "Action", value = fields.action)
-                RequestField(label = "Selected text", value = fields.selectedText)
-                RequestField(label = "Preceding text", value = fields.precedingText)
-                RequestField(label = "Following text", value = fields.followingText)
+                RequestField(label = "Normalized selected text", value = fields.selectedText)
+                RequestField(label = "Normalized preceding text", value = fields.precedingText)
+                RequestField(label = "Normalized following text", value = fields.followingText)
                 RequestField(label = "Source app", value = fields.sourceApp)
                 RequestField(label = "Capture method", value = fields.captureMethod)
                 RequestField(label = "Context quality", value = fields.contextQuality)
+                RequestField(label = "Relevance", value = fields.relevance)
+                RequestField(label = "Segments", value = fields.segments)
                 RequestField(label = "Request id", value = fields.requestId)
+                RequestField(label = "Prompt system instruction", value = fields.systemInstruction)
+                RequestField(label = "Prompt user content", value = fields.userContent)
             }
         }
     }

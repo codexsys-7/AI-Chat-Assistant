@@ -139,7 +139,7 @@ class ContextEngineTest {
         assertTrue(result.followingContext!!.contains("?"))
         assertTrue(result.followingContext!!.contains("!"))
         assertFalse(result.followingContext!!.contains("Later."))
-        assertEquals(ContextQuality.HIGH, result.contextQuality)
+        assertEquals(ContextQuality.LOW, result.contextQuality)
     }
 
     @Test

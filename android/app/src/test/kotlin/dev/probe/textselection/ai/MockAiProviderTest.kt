@@ -32,8 +32,10 @@ class MockAiProviderTest {
         val followUp = PromptEngine.build(request(UserAction.FOLLOW_UP, ContextQuality.HIGH))
 
         assertTrue(explain.systemInstruction.startsWith("Explain the passage"))
+        assertTrue(explain.systemInstruction.contains("ASD-STE100"))
         assertTrue(example.systemInstruction.startsWith("Give a concrete example"))
-        assertTrue(followUp.systemInstruction.startsWith("Answer the implied follow-up"))
+        assertTrue(followUp.systemInstruction.contains("one follow-up question"))
+        assertTrue(followUp.systemInstruction.contains("professor"))
         assertNotEquals(explain.systemInstruction, example.systemInstruction)
         assertNotEquals(example.systemInstruction, followUp.systemInstruction)
         listOf(explain, example, followUp).forEach { prompt ->
