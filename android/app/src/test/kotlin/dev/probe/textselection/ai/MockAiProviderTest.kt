@@ -121,6 +121,7 @@ class MockAiProviderTest {
                 return AIResponse(
                     responseId = "resp-1",
                     requestId = request.requestId,
+                    sessionId = request.sessionId,
                     action = request.action,
                     content = "recorded",
                     provider = providerName,

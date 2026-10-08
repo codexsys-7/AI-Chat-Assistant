@@ -44,11 +44,12 @@ internal class CompletionHandler(
                     provider = providerName,
                     model = modelName,
                     status = "SUCCESS",
+                    sessionId = incoming.sessionId,
                 ),
             )
-            ModelResult.Empty -> errorReply(502, "empty content", incoming.requestId, responseId)
-            ModelResult.TimedOut -> errorReply(504, "timed out", incoming.requestId, responseId)
-            is ModelResult.Failure -> errorReply(502, safeDebug(result.debug), incoming.requestId, responseId)
+            ModelResult.Empty -> errorReply(502, "empty content", incoming.requestId, responseId, incoming.sessionId)
+            ModelResult.TimedOut -> errorReply(504, "timed out", incoming.requestId, responseId, incoming.sessionId)
+            is ModelResult.Failure -> errorReply(502, safeDebug(result.debug), incoming.requestId, responseId, incoming.sessionId)
         }
     }
 
@@ -59,6 +60,7 @@ internal class CompletionHandler(
         debug: String,
         requestId: String,
         responseId: String = newId(),
+        sessionId: String? = null,
     ): Reply {
         return Reply(
             status = status,
@@ -69,6 +71,7 @@ internal class CompletionHandler(
                 provider = providerName,
                 model = modelName,
                 status = "ERROR",
+                sessionId = sessionId,
             ),
         )
     }

@@ -9,12 +9,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun RequestScreen(fields: RequestFields) {
+fun RequestScreen(
+    fields: RequestFields,
+    sessionId: String,
+    interactionCount: String,
+    onResetSession: (() -> Unit)?,
+) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -29,6 +35,8 @@ fun RequestScreen(fields: RequestFields) {
                 RequestField(label = "Normalized preceding text", value = fields.precedingText)
                 RequestField(label = "Normalized following text", value = fields.followingText)
                 RequestField(label = "Source app", value = fields.sourceApp)
+                RequestField(label = "Session id", value = sessionId)
+                RequestField(label = "Interaction count", value = interactionCount)
                 RequestField(label = "Capture method", value = fields.captureMethod)
                 RequestField(label = "Context quality", value = fields.contextQuality)
                 RequestField(label = "Relevance", value = fields.relevance)
@@ -36,6 +44,11 @@ fun RequestScreen(fields: RequestFields) {
                 RequestField(label = "Request id", value = fields.requestId)
                 RequestField(label = "Prompt system instruction", value = fields.systemInstruction)
                 RequestField(label = "Prompt user content", value = fields.userContent)
+                if (onResetSession != null) {
+                    TextButton(onClick = onResetSession) {
+                        Text("Reset session")
+                    }
+                }
             }
         }
     }

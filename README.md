@@ -34,7 +34,7 @@ The debug fields are a `ContextPackage` from `ContextEngine`, not the raw access
 
 ## Actions
 
-Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest`, shows `Preparing response...` for a moment, then a response. The default build uses the local `MockAIProvider` (`mock-v1`) and sends nothing. A debug build can instead use `RemoteAIProvider`, which posts to the backend below. The response names the action, provider, model, both ids, and status. It does not repeat the request fields. **Request debug** on that screen opens the earlier request view. Empty selected text does not create a request.
+Choosing Text Selection Probe opens a dialog-themed activity, not a system overlay. The dialog says what the actions are for, then shows Explain, Give Example, and Ask Follow-up. It does not show the selected sentence. If surrounding context is missing, it also says: `Selected text captured, surrounding context unavailable.` The actions stay usable. Tapping one builds an `AIRequest`, shows `Preparing response...` for a moment, then a response. The default build uses the local `MockAIProvider` (`mock-v1`) and sends nothing. A debug build can instead use `RemoteAIProvider`, which posts to the backend below. The response names the action, provider, model, both ids, and status. It does not repeat the request fields. The first valid action opens an in-memory session. Later actions reuse that session id and get a new request id. Each request keeps only its own selected text. Launching the app does not open a session. **Request debug** on the response screen opens the earlier request view and shows the session id, interaction count, and source app. A missing source app says `unavailable`. A debug build can reset the session from that screen. The next valid action then gets a new session id. Empty selected text does not create a request or a session.
 
 ## Remote provider
 
@@ -76,6 +76,7 @@ Request:
   "precedingText": "A cell still has to turn stored fuel into usable energy.",
   "followingText": null,
   "contextQuality": "HIGH",
+  "sessionId": "session-1",
   "prompt": {
     "systemInstruction": "Explain the passage using the available context.",
     "userContent": "Action: EXPLAIN\nContext quality: HIGH\nPreceding context: ...\nFollowing context: ...\nSelected text: Cells store fuel."
@@ -83,7 +84,7 @@ Request:
 }
 ```
 
-`action` is `EXPLAIN`, `EXAMPLE`, or `FOLLOW_UP`. `prompt` is the existing `PromptEngine` result. The body does not include the conversation, a device id, the source package, or analytics. `precedingText` and `followingText` are null when that side was not captured. When context quality is `UNAVAILABLE`, the prompt says preceding and following context are unavailable and that the model must answer from the selected text alone. It does not invent surrounding sentences. Explain asks for ASD-STE100 simplified technical English in no more than 3 sentences. Example asks for one simple example. Follow-up asks one question about the selected text and a short professor-style explanation of that question.
+`action` is `EXPLAIN`, `EXAMPLE`, or `FOLLOW_UP`. `prompt` is the existing `PromptEngine` result. `sessionId` is optional. When the app sends it, the field is correlation metadata for that request: the server echoes it on the response, does not store a session, and does not put it in the OpenAI messages. The body does not include the conversation, previous selections, a device id, the source package, or analytics. `precedingText` and `followingText` are null when that side was not captured. When context quality is `UNAVAILABLE`, the prompt says preceding and following context are unavailable and that the model must answer from the selected text alone. It does not invent surrounding sentences. Explain asks for ASD-STE100 simplified technical English in no more than 3 sentences. Example asks for one simple example. Follow-up asks one question about the selected text and a short professor-style explanation of that question.
 
 Response:
 
@@ -94,11 +95,12 @@ Response:
   "content": "...",
   "provider": "OpenAI",
   "model": "gpt-4o-mini",
-  "status": "SUCCESS"
+  "status": "SUCCESS",
+  "sessionId": "session-1"
 }
 ```
 
-`status` is `SUCCESS` or `ERROR`. Failures use the same shape: a short user-facing message, a `Debug:` line, and no upstream error body. The app checks the body before it builds the existing `AIResponse`. The screen still lists Action, Response, Provider, Model, Request id, Response id, and Status. A real success shows the provider and model from this JSON. The screen header still says `MOCK`; that label was left in place with the rest of the response UI.
+`status` is `SUCCESS` or `ERROR`. Failures use the same shape: a short user-facing message, a `Debug:` line, and no upstream error body. `sessionId` is present only when the request sent one. The app checks the body before it builds the existing `AIResponse`, and it keeps the session id from the request it sent. The screen still lists Action, Response, Provider, Model, Request id, Response id, and Status. A real success shows the provider and model from this JSON. The screen header still says `MOCK`; that label was left in place with the rest of the response UI.
 
 On an emulator, install the `REMOTE` debug APK, start the backend with `OPENAI_API_KEY` set, open Sample Chat, select a sentence, and choose Explain, Give Example, or Ask Follow-up. The screen should keep `Preparing response...` until the call finishes, then show the model text or a controlled error.
 

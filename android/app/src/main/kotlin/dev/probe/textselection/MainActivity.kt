@@ -14,6 +14,7 @@ import dev.probe.textselection.context.ContextCaptureRepository
 import dev.probe.textselection.engine.ContextEngine
 import dev.probe.textselection.interaction.AIRequestAttempt
 import dev.probe.textselection.interaction.AIRequestFactory
+import dev.probe.textselection.interaction.ConversationSessions
 import dev.probe.textselection.interaction.UserAction
 
 class MainActivity : ComponentActivity() {
@@ -50,7 +51,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun onAction(action: UserAction) {
-        when (val attempt = AIRequestFactory.create(contextPackage, action)) {
+        when (val attempt = AIRequestFactory.create(
+            contextPackage,
+            action,
+            sessionId = { ConversationSessions.manager.idForValidInteraction() },
+        )) {
             is AIRequestAttempt.Rejected -> rejection = attempt.reason
             is AIRequestAttempt.Ready -> {
                 rejection = null

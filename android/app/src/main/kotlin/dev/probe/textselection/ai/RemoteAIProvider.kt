@@ -29,6 +29,7 @@ class RemoteAIProvider internal constructor(
             contextQuality = request.contextQuality.name,
             systemInstruction = prompt.systemInstruction,
             userContent = prompt.userContent,
+            sessionId = request.sessionId.takeIf { it.isNotBlank() },
         )
         return try {
             when (val exchange = client.exchange(payload)) {
@@ -91,6 +92,7 @@ class RemoteAIProvider internal constructor(
             return AIResponse(
                 responseId = payload.responseId,
                 requestId = request.requestId,
+                sessionId = request.sessionId,
                 action = request.action,
                 content = payload.content,
                 provider = payload.provider,
@@ -106,6 +108,7 @@ class RemoteAIProvider internal constructor(
         return AIResponse(
             responseId = payload.responseId,
             requestId = request.requestId,
+            sessionId = request.sessionId,
             action = request.action,
             content = content,
             provider = payload.provider,
@@ -124,6 +127,7 @@ class RemoteAIProvider internal constructor(
         return AIResponse(
             responseId = responseId,
             requestId = request.requestId,
+            sessionId = request.sessionId,
             action = request.action,
             content = remoteErrorContent(debug),
             provider = provider,

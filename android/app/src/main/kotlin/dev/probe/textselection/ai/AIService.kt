@@ -23,6 +23,7 @@ class AIService(
             AIResponse(
                 responseId = newId(),
                 requestId = request.requestId,
+                sessionId = request.sessionId,
                 action = request.action,
                 content = ERROR_MESSAGE,
                 provider = provider.providerName,

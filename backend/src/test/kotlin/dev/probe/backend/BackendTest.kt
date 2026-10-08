@@ -276,6 +276,46 @@ class BackendTest {
         }
     }
 
+    @Test
+    fun sessionIdIsCorrelationOnlyAndIsNotSentToTheModel() {
+        val seen = mutableListOf<Pair<String, String>>()
+        var called = false
+        val handler = CompletionHandler(
+            model = LanguageModel { system, user ->
+                called = true
+                seen += system to user
+                ModelResult.Success("ok")
+            },
+            modelName = "gpt-4o-mini",
+            newId = { "response-9" },
+        )
+        val withSession = JSONObject(sampleRequest())
+            .put("sessionId", "session-correlation-1")
+            .toString()
+        val reply = handler.handle("POST", "/v1/complete", withSession)
+        val json = JSONObject(reply.body)
+
+        assertEquals(200, reply.status)
+        assertEquals("session-correlation-1", json.getString("sessionId"))
+        assertEquals("request-1", json.getString("requestId"))
+        assertEquals("response-9", json.getString("responseId"))
+        assertEquals(listOf(systemPrompt to userPrompt), seen)
+        assertFalse(seen.single().first.contains("session-correlation-1"))
+        assertFalse(seen.single().second.contains("session-correlation-1"))
+        assertFalse(reply.body.contains("OLD-SELECTION"))
+        assertEquals("session-correlation-1", parseIncoming(withSession)?.sessionId)
+
+        val without = handler.handle("POST", "/v1/complete", sampleRequest())
+        assertFalse(JSONObject(without.body).has("sessionId"))
+        assertNull(parseIncoming(sampleRequest())?.sessionId)
+
+        called = false
+        val notText = JSONObject(sampleRequest()).put("sessionId", 12).toString()
+        val rejected = handler.handle("POST", "/v1/complete", notText)
+        assertEquals(400, rejected.status)
+        assertFalse(called)
+    }
+
     private fun sampleRequest(preceding: String? = "Before.", following: String? = "After."): String {
         return JSONObject()
             .put("requestId", "request-1")
