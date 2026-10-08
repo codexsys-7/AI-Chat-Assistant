@@ -3,7 +3,8 @@ package dev.probe.textselection.engine
 /**
  * Trims and collapses captured text. It does not summarize, translate, or add sentences.
  * Selected text is only whitespace-normalized. Surrounding text may lose duplicated
- * selection copies, speaker-labeled user turns, and obvious UI chrome.
+ * selection copies, other-speaker turns, and obvious UI chrome. Speaker labels are
+ * detected before a sentence is kept, including when "You" was glued to the next words.
  */
 object ContextNormalizer {
     fun normalize(
@@ -155,7 +156,14 @@ object ContextNormalizer {
     }
 
     private fun dropUiNoise(pieces: List<Piece>): List<Piece> {
-        return pieces.filter { piece -> chromeKey(piece.text) !in UI_NOISE }
+        return pieces.filter { piece -> !isChromeOrOtherSpeaker(piece.text) }
+    }
+
+    private fun isChromeOrOtherSpeaker(text: String): Boolean {
+        if (chromeKey(text) in UI_NOISE) return true
+        if (text.startsWith("Sample Chat")) return true
+        if (text.contains("Text Selection Probe")) return true
+        return Regex("(^|\\s)(You|Assistant)(?=\\s+\\p{Lu})").containsMatchIn(text)
     }
 
     private fun dropDuplicates(pieces: List<Piece>): List<Piece> {
@@ -192,5 +200,6 @@ object ContextNormalizer {
         "paste",
         "cut",
         "text selection probe",
+        "sample chat",
     )
 }
