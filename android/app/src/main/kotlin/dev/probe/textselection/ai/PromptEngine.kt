@@ -8,6 +8,7 @@ import dev.probe.textselection.interaction.UserAction
 /**
  * Turns an [AIRequest] into a [Prompt]. Local only: no network and no new facts.
  * Providers must forward this prompt and must not rebuild it.
+ * Session id and earlier selections are not prompt content.
  */
 object PromptEngine {
     fun build(request: AIRequest): Prompt {

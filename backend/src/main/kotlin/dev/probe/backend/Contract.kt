@@ -6,6 +6,7 @@ import org.json.JSONObject
 /**
  * `POST /v1/complete` request. `prompt` is used as the model input.
  * Preceding and following text are optional and are not invented here.
+ * [sessionId] is optional correlation metadata. It is not stored and not model input.
  */
 internal data class IncomingRequest(
     val requestId: String,
@@ -16,6 +17,7 @@ internal data class IncomingRequest(
     val contextQuality: String,
     val systemInstruction: String,
     val userContent: String,
+    val sessionId: String? = null,
 )
 
 internal fun parseIncoming(body: String): IncomingRequest? {
@@ -31,6 +33,7 @@ internal fun parseIncoming(body: String): IncomingRequest? {
             contextQuality = requiredText(json, "contextQuality"),
             systemInstruction = requiredText(prompt, "systemInstruction"),
             userContent = requiredText(prompt, "userContent"),
+            sessionId = optionalText(json, "sessionId")?.takeIf { it.isNotBlank() },
         )
     } catch (_: Exception) {
         null
@@ -44,15 +47,19 @@ internal fun responseJson(
     provider: String,
     model: String,
     status: String,
+    sessionId: String? = null,
 ): String {
-    return JSONObject()
+    val json = JSONObject()
         .put("requestId", requestId)
         .put("responseId", responseId)
         .put("content", content)
         .put("provider", provider)
         .put("model", model)
         .put("status", status)
-        .toString()
+    if (!sessionId.isNullOrBlank()) {
+        json.put("sessionId", sessionId)
+    }
+    return json.toString()
 }
 
 internal fun userFacingError(debug: String): String {

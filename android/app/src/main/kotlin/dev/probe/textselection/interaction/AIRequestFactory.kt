@@ -7,6 +7,8 @@ import java.util.UUID
 /**
  * Builds an [AIRequest] from a [ContextPackage] and a [UserAction].
  * The screen must not assemble requests itself.
+ * [sessionId] runs only after the package and action are valid, so a rejected
+ * interaction does not open a session. The id is metadata and is not prompt text.
  */
 object AIRequestFactory {
     const val EMPTY_SELECTED_TEXT = "Selected text is empty."
@@ -15,6 +17,7 @@ object AIRequestFactory {
     fun create(
         contextPackage: ContextPackage,
         userAction: UserAction?,
+        sessionId: () -> String = { "session-1" },
         newId: () -> String = { UUID.randomUUID().toString() },
         now: () -> Instant = { Instant.now() },
     ): AIRequestAttempt {
@@ -28,6 +31,7 @@ object AIRequestFactory {
         return AIRequestAttempt.Ready(
             AIRequest(
                 requestId = newId(),
+                sessionId = sessionId(),
                 action = userAction,
                 selectedText = selectedText,
                 precedingContext = contextPackage.precedingContext,

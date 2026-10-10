@@ -10,6 +10,7 @@ import java.time.Instant
  */
 data class AIRequest(
     val requestId: String,
+    val sessionId: String,
     val action: UserAction,
     val selectedText: String,
     val precedingContext: String?,

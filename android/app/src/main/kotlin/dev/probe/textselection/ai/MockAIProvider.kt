@@ -35,6 +35,7 @@ class MockAIProvider(
         return AIResponse(
             responseId = newId(),
             requestId = request.requestId,
+            sessionId = request.sessionId,
             action = request.action,
             content = content,
             provider = providerName,

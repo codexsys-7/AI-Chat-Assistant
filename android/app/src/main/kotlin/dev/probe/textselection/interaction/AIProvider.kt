@@ -12,6 +12,7 @@ enum class ResponseStatus {
 data class AIResponse(
     val responseId: String,
     val requestId: String,
+    val sessionId: String,
     val action: UserAction,
     val content: String,
     val provider: String,

@@ -13,6 +13,7 @@ import dev.probe.textselection.interaction.ResponseStatus
  *   "precedingText": "... or null",
  *   "followingText": "... or null",
  *   "contextQuality": "HIGH",
+ *   "sessionId": "optional correlation id",
  *   "prompt": {
  *     "systemInstruction": "...",
  *     "userContent": "..."
@@ -21,8 +22,10 @@ import dev.probe.textselection.interaction.ResponseStatus
  * ```
  *
  * `prompt` is the [dev.probe.textselection.interaction.Prompt] already built by
- * [PromptEngine]. This type does not rebuild it. The source package, capture
- * method, timestamp, device id, and the rest of the conversation are not fields.
+ * [PromptEngine]. This type does not rebuild it. `sessionId` is optional
+ * correlation metadata and is omitted when absent. It is not placed inside
+ * `prompt`. The source package, capture method, timestamp, device id, and
+ * earlier selections are not fields.
  */
 internal data class BackendRequestPayload(
     val requestId: String,
@@ -33,6 +36,7 @@ internal data class BackendRequestPayload(
     val contextQuality: String,
     val systemInstruction: String,
     val userContent: String,
+    val sessionId: String? = null,
 ) {
     fun toJson(): String = buildString {
         append('{')
@@ -42,6 +46,7 @@ internal data class BackendRequestPayload(
         field("precedingText", precedingText?.let(::jsonString) ?: "null")
         field("followingText", followingText?.let(::jsonString) ?: "null")
         field("contextQuality", jsonString(contextQuality))
+        if (!sessionId.isNullOrBlank()) field("sessionId", jsonString(sessionId))
         append(",\"prompt\":{")
         append("\"systemInstruction\":").append(jsonString(systemInstruction))
         append(",\"userContent\":").append(jsonString(userContent))

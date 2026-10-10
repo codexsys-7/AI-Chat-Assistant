@@ -53,6 +53,10 @@ data class RequestFields(
         private const val SYSTEM_INSTRUCTION = "dev.probe.textselection.request.systemInstruction"
         private const val USER_CONTENT = "dev.probe.textselection.request.userContent"
 
+        private fun sourceAppLabel(sourcePackage: String?): String {
+            return sourcePackage?.takeIf { it.isNotBlank() } ?: "unavailable"
+        }
+
         fun from(request: AIRequest): RequestFields {
             val inspection = RequestInspectionBuilder.from(request)
             return RequestFields(
@@ -60,7 +64,7 @@ data class RequestFields(
                 selectedText = inspection.normalizedSelectedText,
                 precedingText = inspection.normalizedPrecedingText,
                 followingText = inspection.normalizedFollowingText,
-                sourceApp = request.sourcePackage.orEmpty(),
+                sourceApp = sourceAppLabel(request.sourcePackage),
                 captureMethod = request.captureMethod.name,
                 contextQuality = inspection.contextQuality,
                 requestId = request.requestId,
@@ -76,7 +80,7 @@ data class RequestFields(
             selectedText = intent?.getStringExtra(SELECTED_TEXT).orEmpty(),
             precedingText = intent?.getStringExtra(PRECEDING_TEXT).orEmpty(),
             followingText = intent?.getStringExtra(FOLLOWING_TEXT).orEmpty(),
-            sourceApp = intent?.getStringExtra(SOURCE_APP).orEmpty(),
+            sourceApp = sourceAppLabel(intent?.getStringExtra(SOURCE_APP)),
             captureMethod = intent?.getStringExtra(CAPTURE_METHOD).orEmpty(),
             contextQuality = intent?.getStringExtra(CONTEXT_QUALITY).orEmpty(),
             requestId = intent?.getStringExtra(REQUEST_ID).orEmpty(),
