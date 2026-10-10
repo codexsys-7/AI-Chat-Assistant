@@ -11,8 +11,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+internal const val SESSION_RESET_NOTICE =
+    "Session reset. The next action starts a new session."
 
 @Composable
 fun RequestScreen(
@@ -21,6 +28,7 @@ fun RequestScreen(
     interactionCount: String,
     onResetSession: (() -> Unit)?,
 ) {
+    var resetNotice by remember { mutableStateOf<String?>(null) }
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -45,8 +53,15 @@ fun RequestScreen(
                 RequestField(label = "Prompt system instruction", value = fields.systemInstruction)
                 RequestField(label = "Prompt user content", value = fields.userContent)
                 if (onResetSession != null) {
-                    TextButton(onClick = onResetSession) {
+                    TextButton(onClick = {
+                        onResetSession()
+                        resetNotice = SESSION_RESET_NOTICE
+                    }) {
                         Text("Reset session")
+                    }
+                    val notice = resetNotice
+                    if (notice != null) {
+                        Text(text = notice, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
