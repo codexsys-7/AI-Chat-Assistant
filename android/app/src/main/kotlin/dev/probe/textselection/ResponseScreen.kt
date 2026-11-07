@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.text.selection.rememberSelectionState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.probe.textselection.interaction.AIResponse
@@ -49,7 +52,11 @@ fun ResponseScreen(
                     is ResponsePhase.Ready -> {
                         val response = phase.response
                         ResponseField(label = "Action", value = response.action.label)
-                        ResponseField(label = "Response", value = response.content)
+                        ResponseField(
+                            label = "Response",
+                            value = response.content,
+                            selectionKey = responseBodySelectionKey(response),
+                        )
                         ResponseField(label = "Provider", value = response.provider)
                         ResponseField(label = "Model", value = response.model)
                         ResponseField(label = "Request id", value = response.requestId)
@@ -68,9 +75,26 @@ fun ResponseScreen(
 }
 
 @Composable
-private fun ResponseField(label: String, value: String) {
+private fun ResponseField(
+    label: String,
+    value: String,
+    selectionKey: ResponseBodySelectionKey? = null,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(text = label, style = MaterialTheme.typography.titleMedium)
-        Text(text = value.ifBlank { "—" }, style = MaterialTheme.typography.bodyLarge)
+        val body = value.ifBlank { "—" }
+        if (selectionKey == null) {
+            Text(text = body, style = MaterialTheme.typography.bodyLarge)
+        } else {
+            // New request or response identity disposes this container, including the
+            // registrar SelectionContainer saves internally. Offsets stay inside that
+            // registrar; the public state only keeps the selected substring.
+            key(selectionKey) {
+                val selectionState = rememberSelectionState()
+                SelectionContainer(state = selectionState) {
+                    Text(text = body, style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
     }
 }
