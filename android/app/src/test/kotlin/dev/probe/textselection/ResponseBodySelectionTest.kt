@@ -5,6 +5,7 @@ import dev.probe.textselection.interaction.ResponseStatus
 import dev.probe.textselection.interaction.UserAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ResponseBodySelectionTest {
@@ -36,6 +37,32 @@ class ResponseBodySelectionTest {
         val next = responseBodySelectionKey(response(requestId = "req-1", responseId = "res-2"))
 
         assertNotEquals(shown, next)
+    }
+
+    @Test
+    fun selectedSubstringIsTheSelectionStateSlice() {
+        assertEquals("retrieves relevant", selectedResponseSubstring(listOf("retrieves relevant")))
+    }
+
+    @Test
+    fun selectedSubstringKeepsTheExactCharacters() {
+        assertEquals("  retrieves relevant", selectedResponseSubstring(listOf("  retrieves relevant")))
+    }
+
+    @Test
+    fun selectedSubstringConcatenatesSlicesWithoutSearching() {
+        assertEquals(
+            "alpha beta",
+            selectedResponseSubstring(listOf("alpha", " beta")),
+        )
+    }
+
+    @Test
+    fun blankSelectionDoesNotOpenAnAction() {
+        assertNull(selectedResponseSubstring(emptyList()))
+        assertNull(selectedResponseSubstring(listOf("")))
+        assertNull(selectedResponseSubstring(listOf("   ")))
+        assertNull(selectedResponseSubstring(listOf("\n\t ")))
     }
 
     @Test

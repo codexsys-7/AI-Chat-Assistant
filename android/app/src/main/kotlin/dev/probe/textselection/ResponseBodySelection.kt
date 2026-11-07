@@ -24,3 +24,21 @@ fun responseBodySelectionKey(response: AIResponse): ResponseBodySelectionKey {
         responseId = response.responseId,
     )
 }
+
+/**
+ * The selected substring from [androidx.compose.foundation.text.selection.SelectionState.selectedTexts].
+ *
+ * One response body is one text node, so the list is that node's selected slice.
+ * Several slices are concatenated in list order and nothing is inserted between them.
+ * This does not search [AIResponse.content], so a repeated sentence is not assigned an occurrence.
+ * A blank or missing selection returns null and does not open an action.
+ */
+fun selectedResponseSubstring(parts: List<String>): String? {
+    val selected = when (parts.size) {
+        0 -> return null
+        1 -> parts[0]
+        else -> parts.joinToString(separator = "")
+    }
+    if (selected.isBlank()) return null
+    return selected
+}
