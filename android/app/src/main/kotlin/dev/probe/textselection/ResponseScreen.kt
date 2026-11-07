@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.contextmenu.builder.item
 import androidx.compose.foundation.text.contextmenu.data.ProcessTextKey
+import androidx.compose.foundation.text.contextmenu.modifier.appendTextContextMenuComponents
 import androidx.compose.foundation.text.contextmenu.modifier.filterTextContextMenuComponents
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.rememberSelectionState
@@ -15,15 +17,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import dev.probe.textselection.context.ResponseContextBuilder
-import dev.probe.textselection.interaction.AIRequestAttempt
 import dev.probe.textselection.interaction.AIResponse
 import dev.probe.textselection.interaction.UserAction
 
@@ -37,47 +33,38 @@ sealed class ResponsePhase {
 fun ResponseScreen(
     phase: ResponsePhase,
     onOpenRequestDebug: (() -> Unit)?,
-    onInAppAction: (AIResponse, String, UserAction) -> AIRequestAttempt,
+    onInAppAction: (AIResponse, String, UserAction) -> Unit,
 ) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize()) {
-            when (phase) {
-                ResponsePhase.Preparing -> {
-                    MessageColumn {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(text = "MOCK", style = MaterialTheme.typography.labelLarge)
+                when (phase) {
+                    ResponsePhase.Preparing -> {
                         Text(
                             text = "Preparing response...",
                             style = MaterialTheme.typography.bodyLarge,
                         )
                     }
-                }
-                is ResponsePhase.Failed -> {
-                    MessageColumn {
+                    is ResponsePhase.Failed -> {
                         Text(text = phase.message, style = MaterialTheme.typography.bodyLarge)
                     }
-                }
-                is ResponsePhase.Ready -> {
-                    ReadyResponse(
-                        response = phase.response,
-                        onOpenRequestDebug = onOpenRequestDebug,
-                        onInAppAction = onInAppAction,
-                    )
+                    is ResponsePhase.Ready -> {
+                        ReadyResponse(
+                            response = phase.response,
+                            onOpenRequestDebug = onOpenRequestDebug,
+                            onInAppAction = onInAppAction,
+                        )
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun MessageColumn(content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(text = "MOCK", style = MaterialTheme.typography.labelLarge)
-        content()
     }
 }
 
@@ -85,7 +72,7 @@ private fun MessageColumn(content: @Composable () -> Unit) {
 private fun ReadyResponse(
     response: AIResponse,
     onOpenRequestDebug: (() -> Unit)?,
-    onInAppAction: (AIResponse, String, UserAction) -> AIRequestAttempt,
+    onInAppAction: (AIResponse, String, UserAction) -> Unit,
 ) {
     val selectionKey = responseBodySelectionKey(response)
     // A new request or response id disposes this container, including the registrar
@@ -93,71 +80,61 @@ private fun ReadyResponse(
     // The public state only keeps the selected substring.
     key(selectionKey) {
         val selectionState = rememberSelectionState()
-        val selected = selectedResponseSubstring(selectionState.selectedTexts.map { it.text })
-        Column(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(text = "MOCK", style = MaterialTheme.typography.labelLarge)
-                ResponseField(label = "Action", value = response.action.label)
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(text = "Response", style = MaterialTheme.typography.titleMedium)
-                    val body = response.content.ifBlank { "—" }
-                    // PROCESS_TEXT items only carry the substring and resolve neighbors from the
-                    // other-app snapshot. They are omitted here. The panel below uses this response.
-                    SelectionContainer(
-                        state = selectionState,
-                        modifier = Modifier.filterTextContextMenuComponents { component ->
-                            component.key !is ProcessTextKey
-                        },
-                    ) {
-                        Text(text = body, style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                ResponseField(label = "Provider", value = response.provider)
-                ResponseField(label = "Model", value = response.model)
-                ResponseField(label = "Request id", value = response.requestId)
-                ResponseField(label = "Response id", value = response.responseId)
-                ResponseField(label = "Status", value = response.status.name)
-                if (onOpenRequestDebug != null) {
-                    TextButton(onClick = onOpenRequestDebug) {
-                        Text("Request debug")
-                    }
-                }
-            }
-            if (selected != null) {
-                ResponseSelectionActions(
+        ResponseField(label = "Action", value = response.action.label)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = "Response", style = MaterialTheme.typography.titleMedium)
+            val body = response.content.ifBlank { "—" }
+            SelectionContainer(
+                state = selectionState,
+                modifier = responseSelectionToolbar(
                     response = response,
-                    selectedText = selected,
+                    selectedText = {
+                        selectedResponseSubstring(selectionState.selectedTexts.map { it.text })
+                    },
                     onInAppAction = onInAppAction,
-                )
+                ),
+            ) {
+                Text(text = body, style = MaterialTheme.typography.bodyLarge)
+            }
+        }
+        ResponseField(label = "Provider", value = response.provider)
+        ResponseField(label = "Model", value = response.model)
+        ResponseField(label = "Request id", value = response.requestId)
+        ResponseField(label = "Response id", value = response.responseId)
+        ResponseField(label = "Status", value = response.status.name)
+        if (onOpenRequestDebug != null) {
+            TextButton(onClick = onOpenRequestDebug) {
+                Text("Request debug")
             }
         }
     }
 }
 
-@Composable
-private fun ResponseSelectionActions(
+/**
+ * Adds Explain, Give Example, and Ask Follow-up to the platform selection toolbar.
+ *
+ * Foundation 1.12.1 puts [appendTextContextMenuComponents] items on the floating
+ * action-mode toolbar beside Copy. PROCESS_TEXT items are removed: they only carry
+ * the substring and would resolve neighbors from the other-app snapshot.
+ */
+private fun responseSelectionToolbar(
     response: AIResponse,
-    selectedText: String,
-    onInAppAction: (AIResponse, String, UserAction) -> AIRequestAttempt,
-) {
-    val contextPackage = ResponseContextBuilder.build(response, selectedText)
-    var rejection by remember(selectedText) { mutableStateOf<String?>(null) }
-    ActionPopup(
-        contextPackage = contextPackage,
-        rejection = rejection,
-        onAction = { action ->
-            when (val attempt = onInAppAction(response, selectedText, action)) {
-                is AIRequestAttempt.Rejected -> rejection = attempt.reason
-                is AIRequestAttempt.Ready -> rejection = null
+    selectedText: () -> String?,
+    onInAppAction: (AIResponse, String, UserAction) -> Unit,
+): Modifier {
+    return Modifier
+        .appendTextContextMenuComponents {
+            val selected = selectedText() ?: return@appendTextContextMenuComponents
+            responseSelectionToolbarActions.forEach { action ->
+                item(key = action, label = action.label) {
+                    onInAppAction(response, selected, action)
+                    close()
+                }
             }
-        },
-    )
+        }
+        .filterTextContextMenuComponents { component ->
+            component.key !is ProcessTextKey
+        }
 }
 
 @Composable

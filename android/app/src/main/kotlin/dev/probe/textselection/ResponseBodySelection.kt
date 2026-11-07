@@ -1,6 +1,7 @@
 package dev.probe.textselection
 
 import dev.probe.textselection.interaction.AIResponse
+import dev.probe.textselection.interaction.UserAction
 
 /**
  * Identity of the response whose body may be selected.
@@ -33,6 +34,12 @@ fun responseBodySelectionKey(response: AIResponse): ResponseBodySelectionKey {
  * This does not search [AIResponse.content], so a repeated sentence is not assigned an occurrence.
  * A blank or missing selection returns null and does not open an action.
  */
+/**
+ * Actions placed on the selection toolbar beside Copy and Select all.
+ * Order matches [UserAction]: Explain, Give Example, Ask Follow-up.
+ */
+val responseSelectionToolbarActions: List<UserAction> = UserAction.entries
+
 fun selectedResponseSubstring(parts: List<String>): String? {
     val selected = when (parts.size) {
         0 -> return null

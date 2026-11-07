@@ -40,6 +40,15 @@ class ResponseBodySelectionTest {
     }
 
     @Test
+    fun toolbarActionsAreExplainExampleAndFollowUp() {
+        assertEquals(
+            listOf("Explain", "Give Example", "Ask Follow-up"),
+            responseSelectionToolbarActions.map { it.label },
+        )
+        assertEquals(UserAction.entries, responseSelectionToolbarActions)
+    }
+
+    @Test
     fun selectedSubstringIsTheSelectionStateSlice() {
         assertEquals("retrieves relevant", selectedResponseSubstring(listOf("retrieves relevant")))
     }

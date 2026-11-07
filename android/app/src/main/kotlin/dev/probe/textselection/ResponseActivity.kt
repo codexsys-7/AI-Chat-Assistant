@@ -43,7 +43,6 @@ class ResponseActivity : ComponentActivity() {
                         PendingRequests.hold(attempt.request)
                         startActivity(ResponseActivity.intent(this, attempt.request.requestId))
                     }
-                    attempt
                 },
             )
         }
