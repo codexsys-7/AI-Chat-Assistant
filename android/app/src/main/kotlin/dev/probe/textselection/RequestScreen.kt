@@ -26,6 +26,9 @@ fun RequestScreen(
     fields: RequestFields,
     sessionId: String,
     interactionCount: String,
+    embeddingStatus: String,
+    embeddingPreview: String?,
+    embeddingDimensions: String?,
     onResetSession: (() -> Unit)?,
 ) {
     var resetNotice by remember { mutableStateOf<String?>(null) }
@@ -50,6 +53,13 @@ fun RequestScreen(
                 RequestField(label = "Relevance", value = fields.relevance)
                 RequestField(label = "Segments", value = fields.segments)
                 RequestField(label = "Request id", value = fields.requestId)
+                RequestField(label = "Embedding status", value = embeddingStatus)
+                if (embeddingPreview != null) {
+                    RequestField(label = "Embedding preview", value = embeddingPreview)
+                }
+                if (embeddingDimensions != null) {
+                    RequestField(label = "Embedding dimensions", value = embeddingDimensions)
+                }
                 RequestField(label = "Prompt system instruction", value = fields.systemInstruction)
                 RequestField(label = "Prompt user content", value = fields.userContent)
                 if (onResetSession != null) {
