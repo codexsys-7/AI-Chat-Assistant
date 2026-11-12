@@ -29,6 +29,7 @@ fun RequestScreen(
     embeddingStatus: String,
     embeddingPreview: String?,
     embeddingDimensions: String?,
+    retrievalDebug: String,
     onResetSession: (() -> Unit)?,
 ) {
     var resetNotice by remember { mutableStateOf<String?>(null) }
@@ -60,6 +61,7 @@ fun RequestScreen(
                 if (embeddingDimensions != null) {
                     RequestField(label = "Embedding dimensions", value = embeddingDimensions)
                 }
+                RequestField(label = "Semantic Memory Retrieval", value = retrievalDebug)
                 RequestField(label = "Prompt system instruction", value = fields.systemInstruction)
                 RequestField(label = "Prompt user content", value = fields.userContent)
                 if (onResetSession != null) {

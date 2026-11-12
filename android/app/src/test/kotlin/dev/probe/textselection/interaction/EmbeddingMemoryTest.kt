@@ -103,7 +103,7 @@ class EmbeddingMemoryTest {
 
             assertEquals(ResponseStatus.SUCCESS, response.status)
             assertEquals(answer, response.content)
-            assertEquals(1, embeddings.texts.size)
+            assertEquals(2, embeddings.texts.size)
             val memory = store.list("session-a").single()
             assertEquals("memory-remote", memory.memoryId)
             assertEquals(request.requestId, memory.requestId)
@@ -114,12 +114,13 @@ class EmbeddingMemoryTest {
             assertEquals(answer, memory.generatedResponse)
             assertEquals(vector, memory.embedding)
             assertEquals(EmbeddingStatus.COMPLETED, memory.embeddingStatus)
-            assertEquals(memoryPassage(memory), embeddings.texts.single())
-            assertFalse(embeddings.texts.single().contains(memory.memoryId))
-            assertFalse(embeddings.texts.single().contains(memory.sessionId))
-            assertFalse(embeddings.texts.single().contains(memory.requestId))
-            assertFalse(embeddings.texts.single().contains(memory.responseId))
-            assertFalse(embeddings.texts.single().contains(sourcePackage))
+            assertFalse(embeddings.texts[0].contains("Generated response:"))
+            assertEquals(memoryPassage(memory), embeddings.texts[1])
+            assertFalse(embeddings.texts[1].contains(memory.memoryId))
+            assertFalse(embeddings.texts[1].contains(memory.sessionId))
+            assertFalse(embeddings.texts[1].contains(memory.requestId))
+            assertFalse(embeddings.texts[1].contains(memory.responseId))
+            assertFalse(embeddings.texts[1].contains(sourcePackage))
             assertTrue(logs.isEmpty())
             val prompt = PromptEngine.build(request)
             assertFalse(prompt.userContent.contains("Generated response:"))
@@ -136,6 +137,9 @@ class EmbeddingMemoryTest {
         val release = CountDownLatch(1)
         val embeddings = object : EmbeddingClient {
             override suspend fun embed(text: String): EmbeddingResult {
+                if (!text.contains("Generated response:")) {
+                    return EmbeddingResult.Success(sampleVector(1.0), "text-embedding-3-small", EMBEDDING_DIMENSIONS)
+                }
                 started.countDown()
                 assertTrue(release.await(5, TimeUnit.SECONDS))
                 return EmbeddingResult.Success(sampleVector(1.0), "text-embedding-3-small", EMBEDDING_DIMENSIONS)
@@ -192,7 +196,9 @@ class EmbeddingMemoryTest {
             assertEquals(EmbeddingStatus.FAILED, memory.embeddingStatus)
             assertEquals(listOf(EmbeddingLog.BACKEND), logs)
             assertFalse(logs.any { it.contains(selected) || it.contains(answer) || it.contains("sk-") })
-            assertEquals(1, embeddings.texts.size)
+            assertEquals(2, embeddings.texts.size)
+            assertFalse(embeddings.texts[0].contains("Generated response:"))
+            assertTrue(embeddings.texts[1].contains("Generated response:"))
         }
     }
 
@@ -289,8 +295,8 @@ class EmbeddingMemoryTest {
             assertNull(sessionB.embeddingStatus)
             assertTrue(store.list("session-a").none { it.sessionId == "session-b" || it.selectedText == "beta selection" })
             assertTrue(store.list("session-b").none { it.memoryId == "memory-a" })
-            assertEquals(1, embeddings.texts.size)
-            assertFalse(embeddings.texts.single().contains("beta selection"))
+            assertEquals(2, embeddings.texts.size)
+            assertTrue(embeddings.texts.none { it.contains("beta selection") })
         }
     }
 
@@ -302,6 +308,9 @@ class EmbeddingMemoryTest {
         val release = CountDownLatch(1)
         val embeddings = object : EmbeddingClient {
             override suspend fun embed(text: String): EmbeddingResult {
+                if (!text.contains("Generated response:")) {
+                    return EmbeddingResult.Success(sampleVector(1.0), "text-embedding-3-small", EMBEDDING_DIMENSIONS)
+                }
                 started.countDown()
                 assertTrue(release.await(5, TimeUnit.SECONDS))
                 return EmbeddingResult.Success(sampleVector(1.0), "text-embedding-3-small", EMBEDDING_DIMENSIONS)
@@ -382,7 +391,8 @@ class EmbeddingMemoryTest {
             join(scope)
             assertEquals(ResponseStatus.ERROR, response.status)
             assertTrue(store.list("session-a").isEmpty())
-            assertTrue(embeddings.texts.isEmpty())
+            assertEquals(1, embeddings.texts.size)
+            assertFalse(embeddings.texts.single().contains("Generated response:"))
         }
     }
 

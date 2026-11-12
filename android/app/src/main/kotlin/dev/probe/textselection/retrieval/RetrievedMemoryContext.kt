@@ -4,7 +4,7 @@ import dev.probe.textselection.interaction.InteractionMemory
 
 /**
  * Ranked memories for one retrieval call.
- * Lists are aligned by index and are not attached to a prompt or a request.
+ * Lists are aligned by index. A caller may pass this object to [dev.probe.textselection.ai.PromptEngine].
  * [EMPTY] is the result when nothing qualifies.
  */
 data class RetrievedMemoryContext(

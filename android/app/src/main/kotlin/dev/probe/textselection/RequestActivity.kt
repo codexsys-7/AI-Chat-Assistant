@@ -45,6 +45,7 @@ class RequestActivity : ComponentActivity() {
                 embeddingStatus = embedding.status,
                 embeddingPreview = embedding.preview,
                 embeddingDimensions = embedding.dimensions,
+                retrievalDebug = fields.retrievalDebug,
                 onResetSession = if (BuildConfig.DEBUG) {
                     {
                         ConversationSessions.manager.reset()
