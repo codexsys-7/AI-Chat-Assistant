@@ -43,10 +43,46 @@ data class InteractionMemory(
  * source package are not included. A null side is omitted.
  */
 fun memoryPassage(memory: InteractionMemory): String {
+    return textPassage(
+        selectedText = memory.selectedText,
+        precedingContext = memory.precedingContext,
+        followingContext = memory.followingContext,
+        generatedResponse = memory.generatedResponse,
+    )
+}
+
+/**
+ * Passage for a query that has no generated response yet.
+ * Labels match [memoryPassage]. The generated-response line is omitted.
+ * A null side is omitted. Ids and screen fields are not accepted here.
+ */
+fun queryPassage(
+    selectedText: String,
+    precedingContext: String?,
+    followingContext: String?,
+): String {
+    return textPassage(
+        selectedText = selectedText,
+        precedingContext = precedingContext,
+        followingContext = followingContext,
+        generatedResponse = null,
+    )
+}
+
+/**
+ * Shared labeled passage. A null [generatedResponse] omits that line so a
+ * query and a stored memory stay comparable without duplicating the labels.
+ */
+fun textPassage(
+    selectedText: String,
+    precedingContext: String?,
+    followingContext: String?,
+    generatedResponse: String?,
+): String {
     val lines = ArrayList<String>(4)
-    lines += "Selected text: ${memory.selectedText}"
-    memory.precedingContext?.let { lines += "Preceding context: $it" }
-    memory.followingContext?.let { lines += "Following context: $it" }
-    lines += "Generated response: ${memory.generatedResponse}"
+    lines += "Selected text: $selectedText"
+    precedingContext?.let { lines += "Preceding context: $it" }
+    followingContext?.let { lines += "Following context: $it" }
+    generatedResponse?.let { lines += "Generated response: $it" }
     return lines.joinToString("\n")
 }
