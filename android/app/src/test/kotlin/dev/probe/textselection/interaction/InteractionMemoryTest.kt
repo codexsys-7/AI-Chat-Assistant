@@ -51,6 +51,8 @@ class InteractionMemoryTest {
                 "generatedResponse",
                 "sourcePackage",
                 "createdAt",
+                "embedding",
+                "embeddingStatus",
             ),
             names,
         )
@@ -74,6 +76,8 @@ class InteractionMemoryTest {
         assertEquals(instant, memory.createdAt)
         assertEquals(sourcePackage, memory.sourcePackage)
         assertFalse(memory.generatedResponse.isBlank())
+        assertNull(memory.embedding)
+        assertNull(memory.embeddingStatus)
     }
 
     @Test
@@ -545,6 +549,8 @@ class InteractionMemoryTest {
         assertEquals("memory-remote", memory.memoryId)
         assertEquals("A mitochondrion makes ATP.", memory.generatedResponse)
         assertEquals("Remote selection stays put.", memory.selectedText)
+        assertNull(memory.embedding)
+        assertNull(memory.embeddingStatus)
     }
 
     private fun service(

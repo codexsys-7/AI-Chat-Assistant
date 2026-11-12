@@ -97,15 +97,24 @@ internal fun startCompletionServer(
     port: Int,
     handler: CompletionHandler,
     host: String = "0.0.0.0",
+    embeddings: EmbeddingHandler? = null,
 ): HttpServer {
+    val embeddingHandler = embeddings
     val server = HttpServer.create(InetSocketAddress(host, port), 0)
     server.createContext("/") { exchange ->
+        var embeddingRoute: EmbeddingHandler? = null
         val reply = try {
             val path = exchange.requestURI.path ?: "/"
             val body = exchange.requestBody.bufferedReader(Charsets.UTF_8).use { reader -> reader.readText() }
-            handler.handle(exchange.requestMethod, path, body)
+            val route = if (path == EMBEDDINGS_PATH) embeddingHandler else null
+            embeddingRoute = route
+            if (route != null) {
+                route.handle(exchange.requestMethod, path, body)
+            } else {
+                handler.handle(exchange.requestMethod, path, body)
+            }
         } catch (_: Exception) {
-            handler.unexpected()
+            embeddingRoute?.unexpected() ?: handler.unexpected()
         }
         val bytes = reply.body.toByteArray(Charsets.UTF_8)
         exchange.responseHeaders.set("Content-Type", "application/json; charset=utf-8")

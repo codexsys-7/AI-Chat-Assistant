@@ -40,6 +40,32 @@ class InteractionMemoryStore(
         }
     }
 
+    /**
+     * Replaces the record with the same [InteractionMemory.memoryId].
+     * Does not insert a second record. Returns false when that id is not stored,
+     * including after [clear] or [clearAll].
+     */
+    fun update(memory: InteractionMemory): Boolean {
+        if (memory.memoryId.isBlank() || memory.sessionId.isBlank()) return false
+        synchronized(lock) {
+            if (memory.memoryId !in knownIds) return false
+            val session = bySession[memory.sessionId] ?: return false
+            var found = false
+            val replaced = ArrayDeque<InteractionMemory>(session.size)
+            for (item in session) {
+                if (item.memoryId == memory.memoryId) {
+                    replaced.addLast(memory)
+                    found = true
+                } else {
+                    replaced.addLast(item)
+                }
+            }
+            if (!found) return false
+            bySession[memory.sessionId] = replaced
+            return true
+        }
+    }
+
     fun list(sessionId: String): List<InteractionMemory> {
         if (sessionId.isBlank()) return emptyList()
         synchronized(lock) {
