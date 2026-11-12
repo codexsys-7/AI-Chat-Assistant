@@ -45,11 +45,13 @@ fun sessionDebug(session: ConversationSession?): SessionDebug {
 
 /**
  * Process-local session. No timers, network, or disk.
- * Only the current session is held. Reset drops it.
+ * Only the current session is held. Reset drops it and clears that session's
+ * interaction memories. It does not clear any other session.
  */
 class ConversationSessionManager(
     private val newId: () -> String = { UUID.randomUUID().toString() },
     private val now: () -> Instant = { Instant.now() },
+    private val memories: InteractionMemoryStore = InteractionMemoryStore(),
 ) {
     private val lock = Any()
     private var session: ConversationSession? = null
@@ -73,8 +75,13 @@ class ConversationSessionManager(
     }
 
     fun reset() {
-        synchronized(lock) {
+        val sessionId = synchronized(lock) {
+            val id = session?.sessionId
             session = null
+            id
+        }
+        if (!sessionId.isNullOrBlank()) {
+            memories.clear(sessionId)
         }
     }
 
@@ -112,8 +119,10 @@ class ConversationSessionManager(
 }
 
 /**
- * The app's one in-memory session. Screens share it. Nothing here is written out.
+ * The app's one in-memory session and the successes recorded for it.
+ * Screens share both. Nothing here is written out.
  */
 object ConversationSessions {
-    val manager: ConversationSessionManager = ConversationSessionManager()
+    val memories: InteractionMemoryStore = InteractionMemoryStore()
+    val manager: ConversationSessionManager = ConversationSessionManager(memories = memories)
 }
