@@ -48,10 +48,66 @@ private class JsonCursor(private val text: String) {
         if (eof()) throw JsonParseException()
         return when (text[index]) {
             '{' -> parseObject()
+            '[' -> parseArray()
             '"' -> parseString()
             'n' -> parseNull()
+            't' -> parseLiteral("true", true)
+            'f' -> parseLiteral("false", false)
+            '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> parseNumber()
             else -> throw JsonParseException()
         }
+    }
+
+    private fun parseArray(): List<Any?> {
+        expect('[')
+        val list = mutableListOf<Any?>()
+        skipWs()
+        if (peek(']')) {
+            index++
+            return list
+        }
+        while (true) {
+            list.add(parseValue())
+            skipWs()
+            when {
+                peek(']') -> {
+                    index++
+                    return list
+                }
+                peek(',') -> index++
+                else -> throw JsonParseException()
+            }
+        }
+    }
+
+    private fun parseNumber(): Double {
+        val start = index
+        if (peek('-')) index++
+        if (eof() || !text[index].isDigit()) throw JsonParseException()
+        if (text[index] == '0') {
+            index++
+        } else {
+            while (!eof() && text[index].isDigit()) index++
+        }
+        if (!eof() && text[index] == '.') {
+            index++
+            if (eof() || !text[index].isDigit()) throw JsonParseException()
+            while (!eof() && text[index].isDigit()) index++
+        }
+        if (!eof() && (text[index] == 'e' || text[index] == 'E')) {
+            index++
+            if (!eof() && (text[index] == '+' || text[index] == '-')) index++
+            if (eof() || !text[index].isDigit()) throw JsonParseException()
+            while (!eof() && text[index].isDigit()) index++
+        }
+        val value = text.substring(start, index).toDoubleOrNull() ?: throw JsonParseException()
+        if (!value.isFinite()) throw JsonParseException()
+        return value
+    }
+
+    private fun parseLiteral(literal: String, value: Boolean): Boolean {
+        expectLiteral(literal)
+        return value
     }
 
     private fun parseObject(): Map<String, Any?> {

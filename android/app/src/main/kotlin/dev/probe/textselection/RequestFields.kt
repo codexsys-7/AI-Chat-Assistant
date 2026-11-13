@@ -3,6 +3,7 @@ package dev.probe.textselection
 import android.content.Context
 import android.content.Intent
 import dev.probe.textselection.ai.RequestInspectionBuilder
+import dev.probe.textselection.ai.RetrievalDebugLog
 import dev.probe.textselection.interaction.AIRequest
 
 /**
@@ -22,6 +23,7 @@ data class RequestFields(
     val segments: String,
     val systemInstruction: String,
     val userContent: String,
+    val retrievalDebug: String,
 ) {
     fun toIntent(context: Context): Intent {
         return Intent(context, RequestActivity::class.java)
@@ -37,6 +39,7 @@ data class RequestFields(
             .putExtra(SEGMENTS, segments)
             .putExtra(SYSTEM_INSTRUCTION, systemInstruction)
             .putExtra(USER_CONTENT, userContent)
+            .putExtra(RETRIEVAL_DEBUG, retrievalDebug)
     }
 
     companion object {
@@ -52,6 +55,8 @@ data class RequestFields(
         private const val SEGMENTS = "dev.probe.textselection.request.segments"
         private const val SYSTEM_INSTRUCTION = "dev.probe.textselection.request.systemInstruction"
         private const val USER_CONTENT = "dev.probe.textselection.request.userContent"
+        private const val RETRIEVAL_DEBUG = "dev.probe.textselection.request.retrievalDebug"
+        const val RETRIEVAL_DEBUG_UNRECORDED = "No retrieval record for this request."
 
         private fun sourceAppLabel(sourcePackage: String?): String {
             return sourcePackage?.takeIf { it.isNotBlank() } ?: "unavailable"
@@ -59,6 +64,7 @@ data class RequestFields(
 
         fun from(request: AIRequest): RequestFields {
             val inspection = RequestInspectionBuilder.from(request)
+            val recorded = RetrievalDebugLog.find(request.requestId)
             return RequestFields(
                 action = request.action.label,
                 selectedText = inspection.normalizedSelectedText,
@@ -70,8 +76,9 @@ data class RequestFields(
                 requestId = request.requestId,
                 relevance = inspection.relevance,
                 segments = inspection.segments,
-                systemInstruction = inspection.systemInstruction,
-                userContent = inspection.userContent,
+                systemInstruction = recorded?.systemInstruction ?: inspection.systemInstruction,
+                userContent = recorded?.userContent ?: inspection.userContent,
+                retrievalDebug = recorded?.section ?: RETRIEVAL_DEBUG_UNRECORDED,
             )
         }
 
@@ -88,6 +95,7 @@ data class RequestFields(
             segments = intent?.getStringExtra(SEGMENTS).orEmpty(),
             systemInstruction = intent?.getStringExtra(SYSTEM_INSTRUCTION).orEmpty(),
             userContent = intent?.getStringExtra(USER_CONTENT).orEmpty(),
+            retrievalDebug = intent?.getStringExtra(RETRIEVAL_DEBUG) ?: RETRIEVAL_DEBUG_UNRECORDED,
         )
     }
 }
