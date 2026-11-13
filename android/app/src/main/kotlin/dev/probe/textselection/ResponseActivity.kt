@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import dev.probe.textselection.ai.AppServices
 import dev.probe.textselection.ai.PendingRequests
+import dev.probe.textselection.ai.rememberInAppOrigin
 import dev.probe.textselection.interaction.AIRequestAttempt
 import kotlinx.coroutines.delay
 
@@ -40,6 +41,7 @@ class ResponseActivity : ComponentActivity() {
                 onInAppAction = { shown, selectedText, action ->
                     val attempt = InAppResponseAction.attempt(shown, selectedText, action)
                     if (attempt is AIRequestAttempt.Ready) {
+                        rememberInAppOrigin(attempt.request.requestId, shown.responseId)
                         PendingRequests.hold(attempt.request)
                         startActivity(ResponseActivity.intent(this, attempt.request.requestId))
                     }

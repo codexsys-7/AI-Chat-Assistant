@@ -9,8 +9,8 @@ import java.net.URL
 /**
  * One call to `POST /v1/embeddings` on our backend.
  * Tests supply a fake. The HTTP implementation sends no provider API key.
- * [embed] is reusable for a later query embedding. The action flow calls it
- * only for a stored memory passage.
+ * [embed] is used once for the retrieval query before the prompt, and once
+ * for a stored memory passage after a successful remote response.
  */
 interface EmbeddingClient {
     suspend fun embed(text: String): EmbeddingResult
